@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>ESP32-CAM 雲端直播</title>
+    <style>
+        body { text-align: center; background-color: #222; color: white; font-family: sans-serif; }
+        img { max-width: 100%; border: 2px solid #555; border-radius: 8px; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>我的即時影像</h1>
+    <img id="camera-feed" src="" alt="等待影像訊號中..." />
+
+    <script>
+        // 自動判斷目前的網頁是 http 還是 https，來決定使用 ws 還是 wss
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const ws = new WebSocket(protocol + '//' + window.location.host);
+        
+        const imgElement = document.getElementById('camera-feed');
+
+        ws.binaryType = 'blob'; // 我們預期收到二進位的圖片檔案
+
+        ws.onmessage = (event) => {
+            // 當收到資料時，把它轉換成圖片的 URL 並顯示出來
+            const url = URL.createObjectURL(event.data);
+            imgElement.src = url;
+            
+            // 釋放記憶體，避免瀏覽器崩潰
+            imgElement.onload = () => { URL.revokeObjectURL(url); };
+        };
+
+        ws.onopen = () => console.log('已連線到影像伺服器');
+        ws.onclose = () => console.log('伺服器連線中斷');
+    </script>
+</body>
+</html>
